@@ -1,0 +1,53 @@
+<!--
+{% for user, notes in lecture_notes_grouped %}
+<div class="card p-3 mb-3 shadow-sm">
+    <p><strong>User:</strong> {{ user.username }}</p>
+<a href="{% url 'download_user_images' user.id category.slug course.slug section lecture %}"
+   class="btn btn-success mb-3">
+    Download All Images ({{ user.username }})
+</a>
+
+    <div class="d-flex flex-wrap gap-3">
+    {% for note in notes %}
+    <img src="{{ note.image.url }}" 
+         width="250" 
+         class="rounded shadow img-clickable" 
+         data-bs-toggle="modal" 
+         data-bs-target="#imageModal" 
+         data-img="{{ note.image.url }}"
+         <a href="{{ note.image.url }}" download class="download-icon">
+         ✖
+        </a>
+         >
+         
+        
+    {% endfor %}
+    {% for user, notes in lecture_notes_grouped %}
+<div class="card p-3 mb-3 shadow-sm">
+    <p><strong>User:</strong> {{ user.username }}</p>
+
+    <a href="{% url 'download_user_images' user.id category.slug course.slug section lecture %}"
+       class="btn btn-success mb-3">
+        Download All Images ({{ user.username }})
+    </a>
+
+    <div class="d-flex flex-wrap gap-3">
+        {% for note in notes %}
+        <div class="download-wrapper">
+            <img src="{{ note.image.url }}" 
+                 width="250" 
+                 class="rounded shadow img-clickable"
+                 data-bs-toggle="modal"
+                 data-bs-target="#imageModal"
+                 data-img="{{ note.image.url }}">
+
+            
+            <a href="{{ note.image.url }}" download class="download-icon">
+                ⬇
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+-->

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<section class="py-5 bg-light">
+  <div class="container">
+
+    <!-- Course Header -->
+    <div class="card shadow mb-4 border-0 rounded-4">
+      <div class="card-body">
+        <h2 class="text-primary fw-bold">{{ single_course.course_name }}</h2>
+        <p><strong>Course Initial:</strong> {{ single_course.course_initial }}</p>
+        <p><strong>Section:</strong> {{ single_course.section }}</p>
+        <p><strong>Faculty:</strong> {{ single_course.faculty_name }} ({{ single_course.faculty_initial }})</p>
+      </div>
+    </div>
+
+    <!-- 
+    <h2>Select Lecture</h2>
+    <div class="lecture-buttons mb-4">
+
+ {% for i in "123456789012345678901234"|make_list %}
+<a href="{% url 'course_detail_per_section' category.slug single_course.slug single_course.section forloop.counter %}">
+    <button class="btn btn-primary mb-2">Lecture {{ forloop.counter }}</button>
+</a>
+{% endfor %}-->
+
+
+<div class="dropdown mb-4">
+  <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+    Select Lecture
+  </button>
+
+  <ul class="dropdown-menu">
+    {% for i in "123456789012345678901234"|make_list %}
+      <li>
+        <a class="dropdown-item"
+           href="{% url 'course_detail_per_section' category.slug single_course.slug single_course.section forloop.counter %}">
+          Lecture {{ forloop.counter }}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</div>
+
+</section>
+
+{% endblock %}

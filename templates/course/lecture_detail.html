@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="row mt-4">
+
+  <!-- LEFT SIDE: Upload Section -->
+  <div class="col-md-7">
+    <div class="card shadow border-0 rounded-4 mb-4">
+      <div class="card-body p-4">
+
+        <h2 class="text-primary fw-bold mb-3">
+          {{ course.course_name }} <br> Section {{ section }} – Lecture {{ lecture }}
+        </h2>
+
+        <h4 class="fw-semibold mb-3">Upload Images</h4>
+
+        <form method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Choose Images</label>
+            <input type="file" id="imageInput" name="images" class="form-control" multiple required>
+            <input type="hidden" name="images" id="hiddenImagesInput">
+            
+
+          </div>
+
+          <!-- Preview Box -->
+          <div id="previewContainer"
+               class="d-flex flex-wrap gap-3 mt-3"></div>
+
+          <button type="submit"
+                  class="btn btn-primary btn-lg w-100 rounded-3 mt-4">
+            Upload
+          </button>
+        </form>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE: Final Notes & Download -->
+  <div class="col-md-5">
+    {% if final_notes %}
+    <div class="card shadow border-success rounded-4 p-3 mb-4">
+        <h3 class="text-success">Lecture Notes</h3>
+        <pre class="bg-light p-3"
+             style="max-height: 400px; overflow-y: auto;">{{ final_notes }}</pre>
+
+        <a href="{% url 'download_lecture_notes_pdf' category.slug course.slug section lecture %}"
+           class="btn btn-success mt-2 w-100">
+           Download Notes (PDF)
+        </a>
+    </div>
+    {% else %}
+    <div class="alert alert-info">No final notes generated yet.</div>
+    {% endif %}
+  </div>
+
+</div>
+
+
+<!-- PREVIOUS USER NOTES (BELOW BOTH SIDES) -->
+<hr class="my-4">
+
+<h3 class="mb-3">Uploaded Notes</h3>
+{% for user, notes in lecture_notes_grouped %}
+<div class="card p-3 mb-3 shadow-sm">
+    <p><strong>User:</strong> {{ user.username }}</p>
+
+    
+    <a href="{% url 'download_user_images' user.id category.slug course.slug section lecture %}"
+   class="btn btn-success mb-3">
+    Download All Images ({{ user.username }})
+   </a>
+
+
+    <div class="d-flex flex-wrap gap-3">
+        {% for note in notes %}
+        <div class="download-wrapper">
+            <img src="{{ note.image.url }}" 
+                 width="250" 
+                 class="rounded shadow img-clickable"
+                 data-bs-toggle="modal"
+                 data-bs-target="#imageModal"
+                 data-img="{{ note.image.url }}">
+
+            <!-- Download Icon -->
+            <a href="{{ note.image.url }}" download class="download-icon">
+                ⬇
+            </a>
+        </div>
+        {% endfor %}
+</div>
+
+</div>
+{% empty %}
+<p>No notes yet.</p>
+{% endfor %}
+
+
+<style>
+.preview-box {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+.preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+}
+.remove-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: red;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-weight: bold;
+  border: none;
+}
+
+.download-icon {
+    position: absolute;
+    bottom: 8px;
+    right: 8px;
+    background: rgba(0,0,0,0.6);
+    color: white;
+    padding: 6px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 14px;
+}
+.download-wrapper {
+    position: relative;
+    display: inline-block;
+}
+
+</style>
+
+<script>
+let selectedFiles = [];
+
+document.getElementById("imageInput").addEventListener("change", function(event) {
+    const files = Array.from(event.target.files);
+    files.forEach(file => selectedFiles.push(file));
+    updatePreview();
+});
+
+// Update preview UI
+function updatePreview() {
+    const previewContainer = document.getElementById("previewContainer");
+    previewContainer.innerHTML = "";
+
+    selectedFiles.forEach((file, index) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const box = document.createElement("div");
+            box.classList.add("preview-box");
+
+            const img = document.createElement("img");
+            img.src = e.target.result;
+            img.classList.add("preview-img");
+
+            const removeBtn = document.createElement("button");
+            removeBtn.classList.add("remove-btn");
+            removeBtn.innerHTML = "✖";
+
+            removeBtn.onclick = function() {
+                selectedFiles.splice(index, 1);
+                updatePreview();
+            };
+
+            box.appendChild(img);
+            box.appendChild(removeBtn);
+            previewContainer.appendChild(box);
+        };
+        reader.readAsDataURL(file);
+    });
+
+    updateHiddenInput();
+}
+
+// Convert selectedFiles → DataTransfer → file input
+function updateHiddenInput() {
+    const dt = new DataTransfer();
+    selectedFiles.forEach(f => dt.items.add(f));
+    document.getElementById("imageInput").files = dt.files;
+}
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    var imageModal = document.getElementById("imageModal");
+    var modalImage = document.getElementById("modalImage");
+
+    imageModal.addEventListener("show.bs.modal", function (event) {
+        var triggerImg = event.relatedTarget;  
+        var imgSrc = triggerImg.getAttribute("data-img");
+        modalImage.src = imgSrc;
+    });
+});
+</script>
+<!-- Image Preview Modal -->
+<div class="modal fade" id="imageModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-body p-0">
+        <img id="modalImage" src="" class="w-100 rounded" >
+
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}

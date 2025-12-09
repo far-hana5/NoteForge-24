@@ -1,0 +1,59 @@
+
+
+
+ {% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+
+<!-- ========================= SECTION MAIN ========================= -->
+<section class="section-intro padding-y-sm">
+    <div class="container">
+        <div class="intro-banner-wrap">
+            <img src="{% static 'images/banners/1.jpg' %}" 
+                 class="img-fluid rounded mx-auto d-block" 
+                 style="height: 330px; width: auto;">
+        </div>
+    </div>
+</section>
+<!-- ========================= SECTION MAIN END// ========================= -->
+
+<!-- ========================= COURSES SECTION ========================= -->
+<section class="section-name padding-y-sm">
+    <div class="container">
+
+        <header class="section-heading">
+            <h3 class="section-title">Courses:</h3>
+        </header><!-- sect-heading -->
+
+        <div class="row">
+            {% for course in courses %}
+                <div class="col-md-4 mb-4"> <!-- 12 / 4 = 3 cards per row -->
+                    <a href="{{ course.get_url }}" >
+                        <div class="card text-white p-3" 
+                             style="background: linear-gradient(100deg, #8A2BE2, #000000); border-radius: 12px; height: 180px;">
+                            <figcaption class="info-wrap d-flex flex-column justify-content-center h-150">
+                                <!-- Course Name -->
+                                <h5 class="title fw-bold">{{ course.course_name }}</h5>
+
+                                <!-- Course Initial + Section -->
+                                <div class="text-light small">
+                                    {{ course.course_initial }} | Section {{ course.section }}
+                                </div>
+
+                                <!-- Faculty Name -->
+                                <div class="mt-2 text-light">
+                                    Faculty: {{ course.faculty_name }} ({{ course.faculty_initial }})
+                                </div>
+                            </figcaption>
+                        </div>
+                   </a>
+                </div> <!-- col.// -->
+            {% endfor %}
+        </div> <!-- row.// -->
+
+    </div><!-- container // -->
+</section>
+<!-- ========================= COURSES SECTION END// ========================= -->
+
+{% endblock %}
