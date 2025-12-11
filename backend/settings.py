@@ -10,17 +10,22 @@ from pathlib import Path
 # ------------------------------------------------
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-*selh1o_**lc-kc5oymi=)n8&ke9uo_*^v=986#($^z9=s0312'
 
-#DEBUG = False
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+DEBUG = False
 
 #ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
+
+#ALLOWED_HOSTS = []
 
 EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = 'farhanahussain5730532@gmail.com'
-EMAIL_HOST_PASSWORD = 'tozg ngss jtgw gauu' 
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") 
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True  
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -132,13 +137,16 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 TIME_ZONE = "Asia/Dhaka"
 USE_TZ = True
 
-CELERY_BROKER_URL = "redis://localhost:6379/0"
-CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+#CELERY_BROKER_URL = "redis://localhost:6379/0"
+#CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+# Celery settings
+CELERY_BROKER_URL = os.getenv("REDIS_URL")
+CELERY_RESULT_BACKEND = os.getenv("REDIS_URL")
 
 CELERY_BEAT_SCHEDULE = {
     "process_due_lectures_every_5_minutes": {
         "task": "courses.tasks.process_due_lectures_task",
-        "schedule": 60.0,
+        "schedule": 3600.0,
     },
 }
 
