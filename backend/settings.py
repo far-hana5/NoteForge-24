@@ -18,6 +18,13 @@ SECRET_KEY = 'django-insecure-*selh1o_**lc-kc5oymi=)n8&ke9uo_*^v=986#($^z9=s0312
 DEBUG = True
 ALLOWED_HOSTS = []
 
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'farhanahussain5730532@gmail.com'
+EMAIL_HOST_PASSWORD = 'tozg ngss jtgw gauu' 
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True  
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+ 
 # ------------------------------------------------
 # APPLICATIONS
 # ------------------------------------------------
@@ -121,9 +128,22 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'backend' / 'static']  # ✅ points to backend/static
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
 
+TIME_ZONE = "Asia/Dhaka"
+USE_TZ = True
+
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+
+CELERY_BEAT_SCHEDULE = {
+    "process_due_lectures_every_5_minutes": {
+        "task": "courses.tasks.process_due_lectures_task",
+        "schedule": 60.0,
+    },
+}
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # ------------------------------------------------
 # REST FRAMEWORK

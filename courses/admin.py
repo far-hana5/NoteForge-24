@@ -1,26 +1,17 @@
 from django.contrib import admin
+from .models import Course, SectionNote, LectureFinalNote
 
-# Register your models here.
-from .models import Course, SectionNote
+@admin.register(Course)
+class CourseAdmin(admin.ModelAdmin):
+    list_display = ("course_initial", "course_name", "section", "class_time")
+    search_fields = ("course_name", "course_initial")
 
-# Show images and details in admin
 @admin.register(SectionNote)
 class SectionNoteAdmin(admin.ModelAdmin):
-    list_display = ("id", "user", "course", "lecture", "uploaded_at", "image")
-    list_filter = ("course", "lecture", "uploaded_at", "user")
-    search_fields = ("course__course_name", "user__username", "lecture")
-'''
-    # Add a small preview of the image
-    def image_tag(self, obj):
-        if obj.image:
-            return f'<img src="{obj.image.url}" width="100" />'
-        return "(No image)"
-    image_tag.allow_tags = True
-    image_tag.short_description = "Image Preview"
-'''
+    list_display = ("user", "course", "lecture", "uploaded_at")
+    list_filter = ("course", "lecture")
 
-class CourseAdmin(admin.ModelAdmin):
-    prepopulated_fields={'slug':('course_initial',)}
-    list_display=('course_name','course_initial','faculty_initial')
-
-admin.site.register(Course,CourseAdmin)
+@admin.register(LectureFinalNote)
+class LectureFinalNoteAdmin(admin.ModelAdmin):
+    list_display = ("course", "lecture", "is_generated", "next_pdf_time", "created_at")
+    readonly_fields = ("created_at",)

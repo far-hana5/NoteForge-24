@@ -42,20 +42,27 @@
 
   <!-- RIGHT SIDE: Final Notes & Download -->
   <div class="col-md-5">
-    {% if final_notes %}
-    <div class="card shadow border-success rounded-4 p-3 mb-4">
-        <h3 class="text-success">Lecture Notes</h3>
-        <pre class="bg-light p-3"
-             style="max-height: 400px; overflow-y: auto;">{{ final_notes }}</pre>
+  {% if final_notes %}
+    <div class="card shadow border-success rounded-4 p-3 h-100 d-flex flex-column">
+        <h3 class="text-success mb-3">Lecture Notes</h3>
 
+        <pre class="bg-light p-3 flex-grow-1 overflow-auto rounded"
+             style="max-height: 400px;">{{ final_notes }}</pre>
+
+        {% if final_note_obj.is_generated %}
         <a href="{% url 'download_lecture_notes_pdf' category.slug course.slug section lecture %}"
-           class="btn btn-success mt-2 w-100">
+           class="btn btn-success mt-3 w-100">
            Download Notes (PDF)
         </a>
+        {% else %}
+        <div class="alert alert-warning mt-3 text-center">
+            PDF will be ready at {{ final_note_obj.next_pdf_time|date:"H:i, d M Y" }}
+        </div>
+        {% endif %}
+
     </div>
-    {% else %}
-    <div class="alert alert-info">No final notes generated yet.</div>
-    {% endif %}
+{% endif %}
+
   </div>
 
 </div>
