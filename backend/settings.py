@@ -23,7 +23,8 @@ if ENVIRONMENT=='deployment':
 else:
     DEBUG = False
 
-ALLOWED_HOSTS = ["127.0.0.1", "*"]
+ALLOWED_HOSTS = ["127.0.0.1", "*","web-production-1be98a.up.railway.app"]
+CSRF_TRUSTED_ORIGINS=['https://web-production-1be98a.up.railway.app']
 #ALLOWED_HOSTS = os.getenv(["*"])
 
 #ALLOWED_HOSTS = []
@@ -45,6 +46,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'cloudinary',
+    'cloudinary_storage',
 
     # Third-party
     'rest_framework',
@@ -172,8 +175,13 @@ USE_TZ = True
 #CELERY_BROKER_URL = "redis://localhost:6379/0"
 #CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
 # Celery settings
-#CELERY_BROKER_URL = os.getenv("REDIS_URL")
-#CELERY_RESULT_BACKEND = os.getenv("REDIS_URL")
+if DB_LIVE in ["False",False]:
+     CELERY_BROKER_URL = "redis://localhost:6379/0"
+     CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+else:
+     CELERY_BROKER_URL = os.getenv("REDIS_URL")
+     CELERY_RESULT_BACKEND = os.getenv("REDIS_URL")
+     
 
 CELERY_BEAT_SCHEDULE = {
     "process_due_lectures_every_5_minutes": {
