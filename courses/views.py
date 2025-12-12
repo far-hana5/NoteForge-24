@@ -53,9 +53,11 @@ def search(request):
     }
 
     return render(request, "course/course.html",context)
-
 @login_required(login_url="login")
-def course_detail(request, category_slug, course_slug, section, lecture):
+def course_detail(request, category_slug, course_slug, section):
+    """
+    Display course info and handle image uploads without lecture context.
+    """
     category = get_object_or_404(CourseCategory, slug=category_slug)
     course = get_object_or_404(Course, category=category, slug=course_slug, section=section)
     generated_notes = None
@@ -66,9 +68,68 @@ def course_detail(request, category_slug, course_slug, section, lecture):
             return HttpResponseBadRequest("No images uploaded.")
 
         all_text = []
-
         for img_file in images:
-            # Save image directly to Cloudinary via SectionNote
+            # Save SectionNote without lecture (lecture=None)
+            sn = SectionNote.objects.create(
+                user=request.user,
+                course=course,
+                lecture=0,  # or None if your model allows null
+                image=img_file
+            )
+
+            # Extract text from uploaded image
+            try:
+                extracted = extract_text_from_image(sn.image.path)
+            except Exception:
+                extracted = "(Error extracting text)"
+
+            sn.extracted_text = extracted
+            sn.save()
+            all_text.append(extracted)
+
+        combined = "\n\n".join(all_text)
+        try:
+            generated_notes = structure_text_with_gemini(combined)
+        except Exception:
+            generated_notes = combined
+
+    context = {
+        "single_course": course,
+        "category": category,
+        "notes": generated_notes,
+    }
+    return render(request, "course/course_detail.html", context)
+
+
+# -----------------------------
+# Per-lecture course page
+# -----------------------------
+@login_required(login_url="login")
+def course_detail_per_section(request, category_slug, course_slug, section, lecture):
+    """
+    Handle per-lecture page: image uploads, OCR, AI notes.
+    """
+    category = get_object_or_404(CourseCategory, slug=category_slug)
+    course = get_object_or_404(Course, category=category, slug=course_slug, section=section)
+
+    # Fetch notes for this lecture grouped by user
+    all_notes = SectionNote.objects.filter(course=course, lecture=lecture).select_related("user").order_by("-uploaded_at")
+    lecture_notes_grouped = defaultdict(list)
+    for note in all_notes:
+        lecture_notes_grouped[note.user].append(note)
+    lecture_notes_grouped_list = list(lecture_notes_grouped.items())
+
+    # Get final AI notes if they exist
+    final_note_obj = LectureFinalNote.objects.filter(course=course, lecture=lecture).first()
+    final_notes = final_note_obj.notes if final_note_obj else None
+
+    if request.method == "POST":
+        images = request.FILES.getlist("images")
+        if not images:
+            return HttpResponseBadRequest("No images uploaded.")
+
+        all_text_parts = []
+        for img_file in images:
             sn = SectionNote.objects.create(
                 user=request.user,
                 course=course,
@@ -77,76 +138,8 @@ def course_detail(request, category_slug, course_slug, section, lecture):
             )
 
             try:
-                # Download image from Cloudinary to memory for OCR
-                resp = requests.get(sn.image.url)
-                tmp_file = ContentFile(resp.content)
-
-                extracted = extract_text_from_image(tmp_file)  # must accept file-like
-            except Exception as e:
-                logger.exception("OCR failed for %s: %s", sn.image.url, e)
-                extracted = "(Error extracting text)"
-
-            sn.extracted_text = extracted
-            sn.save()
-            all_text.append(extracted)
-
-        combined = "\n\n".join(all_text)
-
-        try:
-            generated_notes = structure_text_with_gemini(combined)
-        except Exception as e:
-            logger.exception("AI notes generation failed: %s", e)
-            generated_notes = combined
-
-    context = {
-        "single_course": course,
-        "category": category,
-        "lecture": lecture,
-        "notes": generated_notes,
-    }
-    return render(request, "course/course_detail.html", context)
-
-
-@login_required(login_url="login")
-def course_detail_per_section(request, category_slug, course_slug, section, lecture):
-    category = get_object_or_404(CourseCategory, slug=category_slug)
-    course = get_object_or_404(Course, slug=course_slug, category=category, section=section)
-
-    # Fetch notes and group by user
-    all_notes = SectionNote.objects.filter(course=course, lecture=lecture).select_related("user").order_by("-uploaded_at")
-    lecture_notes_grouped = defaultdict(list)
-    for note in all_notes:
-        lecture_notes_grouped[note.user].append(note)
-    lecture_notes_grouped_list = list(lecture_notes_grouped.items())
-
-    # Get final AI notes if exist
-    final_note_obj = LectureFinalNote.objects.filter(course=course, lecture=lecture).first()
-    final_notes = final_note_obj.notes if final_note_obj else None
-
-    # Handle uploaded images
-    if request.method == "POST":
-        images = request.FILES.getlist("images")
-        if not images:
-            return HttpResponseBadRequest("No images uploaded.")
-
-        all_text_parts = []
-
-        for img_file in images:
-            # Save SectionNote without local file path
-            sn = SectionNote.objects.create(
-                user=request.user,
-                course=course,
-                lecture=lecture,
-                image=img_file  # Cloudinary handles storage
-            )
-
-            # Download image in-memory for OCR (works with Cloudinary URL)
-            img_url = sn.image.url
-            try:
-                resp = requests.get(img_url)
-                image_file = io.BytesIO(resp.content)
-                extracted = extract_text_from_image(image_file)
-            except Exception as e:
+                extracted = extract_text_from_image(sn.image.path)
+            except Exception:
                 extracted = "(Error extracting text)"
 
             sn.extracted_text = extracted
@@ -155,13 +148,11 @@ def course_detail_per_section(request, category_slug, course_slug, section, lect
 
         combined_text = "\n\n".join(all_text_parts)
 
-        # Generate AI notes
         try:
             generated_notes = structure_text_with_gemini(combined_text)
         except Exception:
             generated_notes = combined_text
 
-        # Save/update LectureFinalNote
         if final_note_obj:
             final_note_obj.notes = generated_notes
             final_note_obj.save()
@@ -267,30 +258,39 @@ def download_user_images(request, user_id, category_slug, course_slug, section, 
 
     with zipfile.ZipFile(buffer, "w") as zip_file:
         for note in notes:
-            # Download image from Cloudinary
-            resp = requests.get(note.image.url)
-            tmp_file = io.BytesIO(resp.content)
-
-            # Optional: enhance image in-memory
             try:
-                # Save to temporary path to pass into your OpenCV enhancer
-                tmp_path = f"/tmp/{note.image.name}"
-                with open(tmp_path, "wb") as f:
-                    f.write(tmp_file.getvalue())
-                enhanced_path = tmp_path.replace(".","_enhanced.")
+                # Download image from Cloudinary
+                resp = requests.get(note.image.url)
+                resp.raise_for_status()
+            except Exception:
+                continue  # skip this image if download fails
+
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(note.image.name)[1]) as tmp:
+                tmp.write(resp.content)
+                tmp_path = tmp.name
+
+            try:
+                # Enhance image
+                enhanced_path = tmp_path.replace(".", "_enhanced.", 1)
                 enhance_document(tmp_path, enhanced_path)
 
                 # Add enhanced image to ZIP
                 with open(enhanced_path, "rb") as f:
-                    zip_file.writestr(f"enhanced_{note.image.name}", f.read())
+                    zip_file.writestr(f"enhanced_{os.path.basename(note.image.name)}", f.read())
             except Exception:
-                # Fallback: use original image
-                zip_file.writestr(note.image.name, tmp_file.getvalue())
+                # fallback: original image
+                with open(tmp_path, "rb") as f:
+                    zip_file.writestr(os.path.basename(note.image.name), f.read())
+            finally:
+                # Clean up temp files
+                if os.path.exists(tmp_path):
+                    os.remove(tmp_path)
+                if os.path.exists(enhanced_path):
+                    os.remove(enhanced_path)
 
     buffer.seek(0)
     filename = f"user_{user_id}_lecture_{lecture}_images.zip"
     return FileResponse(buffer, as_attachment=True, filename=filename, content_type="application/zip")
-
 @login_required(login_url="login")
 def enhance_view(request):
     """
