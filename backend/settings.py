@@ -7,35 +7,37 @@ from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
 
-ENVIRONMENT=os.getenv('ENVIRONMENT',default='production')  
+# ------------------------------------------------
+# ENVIRONMENT
+# ------------------------------------------------
+ENVIRONMENT = os.getenv("ENVIRONMENT", "production")
 
-# ------------------------------------------------
-# BASE SETTINGS
-# ------------------------------------------------
+# BASE DIR
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
-
-
-SECRET_KEY = os.getenv("SECRET_KEY")
-if ENVIRONMENT=='deployment': 
-    DEBUG=True
-else:
-    DEBUG = False
-site_domain=os.getenv('RAILWAY_PUBLIC_DOMAIN',default='')
-ALLOWED_HOSTS = ["127.0.0.1",site_domain]
-CSRF_TRUSTED_ORIGINS=[ f'https://{site_domain}']
-
-
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD") 
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True  
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
- 
 # ------------------------------------------------
-# APPLICATIONS
+# SECURITY
+# ------------------------------------------------
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+# DEBUG = False in Railway
+DEBUG = True if ENVIRONMENT == "deployment" else False
+
+SITE_DOMAIN = os.getenv("RAILWAY_PUBLIC_DOMAIN", "")
+
+ALLOWED_HOSTS = [
+    "127.0.0.1",
+    "localhost",
+    SITE_DOMAIN,
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{SITE_DOMAIN}",
+    f"http://{SITE_DOMAIN}",
+]
+
+# ------------------------------------------------
+# INSTALLED APPS
 # ------------------------------------------------
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -44,13 +46,12 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'cloudinary',
     'cloudinary_storage',
 
-    # Third-party
     'rest_framework',
 
-    #  app(s)
     'core',
     'category',
     'accounts',
@@ -58,13 +59,15 @@ INSTALLED_APPS = [
     'image_enhancer',
 ]
 
-
 # ------------------------------------------------
 # MIDDLEWARE
 # ------------------------------------------------
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+
+    # WhiteNoise must be here
     "whitenoise.middleware.WhiteNoiseMiddleware",
+
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -72,7 +75,6 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-
 
 # ------------------------------------------------
 # URLS / WSGI
@@ -87,7 +89,7 @@ AUTH_USER_MODEL = 'accounts.Account'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'], 
+        'DIRS': [BASE_DIR / "templates"],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -101,36 +103,29 @@ TEMPLATES = [
     },
 ]
 
-
 # ------------------------------------------------
 # DATABASE
 # ------------------------------------------------
-DB_LIVE = os.getenv('DB_LIVE')
-if DB_LIVE in ["False",False]:
-      
+DB_LIVE = os.getenv("DB_LIVE")
 
-      
-      DATABASES = {
-          'default': {
-              'ENGINE': 'django.db.backends.sqlite3',
-              'NAME': BASE_DIR / 'db.sqlite3',
-          }
-      }
-
+if DB_LIVE in ["False", False, None]:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 else:
-
-      DATABASES={
-          'default':{
-              'ENGINE':'django.db.backends.postgresql',
-              'NAME':os.getenv('DB_NAME'),
-              'USER':os.getenv('DB_USER'),
-              'PASSWORD':os.getenv('DB_PASSWORD'),
-              'HOST': os.getenv('DB_HOST', 'localhost'),
-              #'HOST':os.getenv('DB_HOST'),
-              'PORT':os.getenv('DB_PORT'),
-          }
-      }
-
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST'),
+            'PORT': os.getenv('DB_PORT'),
+        }
+    }
 
 # ------------------------------------------------
 # PASSWORD VALIDATION
@@ -142,69 +137,54 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
+# ------------------------------------------------
+# STATIC FILES
+# ------------------------------------------------
+STATIC_URL = "/static/"
 
-# ------------------------------------------------
-# INTERNATIONALIZATION
-# ------------------------------------------------
-LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_TZ = True
+# Your folder is backend/static
+STATICFILES_DIRS = [
+    BASE_DIR / "backend" / "static"
+]
 
+STATIC_ROOT = BASE_DIR / "staticfiles"
 
-# ------------------------------------------------
-# STATIC FILES (CSS, JS, etc.)
-# ------------------------------------------------
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'backend' / 'static']  # Local static files during dev
-STATIC_ROOT = BASE_DIR / 'staticfiles'  # Where collectstatic will put files
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+WHITENOISE_USE_FINDERS = True
 
 # ------------------------------------------------
-# MEDIA FILES (User uploads, images, etc.)
+# MEDIA FILES (Cloudinary)
 # ------------------------------------------------
-# Use Cloudinary for media storage
-DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
-
-# You can still keep MEDIA_URL for reference (optional)
-MEDIA_URL = '/media/'  
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
 
 # ------------------------------------------------
 # CLOUDINARY CONFIG
 # ------------------------------------------------
 import cloudinary
-import cloudinary.uploader
-import cloudinary.api
-
 cloudinary.config(
-    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
-    api_key=os.getenv('CLOUDINARY_API_KEY'),
-    api_secret=os.getenv('CLOUDINARY_API_SECRET'),
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
 )
 
-
-TIME_ZONE = "Asia/Dhaka"
-USE_TZ = True
-
-
-# Celery settings
-if DB_LIVE in ["False",False]:
-     CELERY_BROKER_URL = "redis://localhost:6379/0"
-     CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+# ------------------------------------------------
+# CELERY
+# ------------------------------------------------
+if DB_LIVE in ["False", False]:
+    CELERY_BROKER_URL = "redis://localhost:6379/0"
+    CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
 else:
-     CELERY_BROKER_URL = os.getenv("REDIS_URL")
-     CELERY_RESULT_BACKEND = os.getenv("REDIS_URL")
-     
+    CELERY_BROKER_URL = os.getenv("REDIS_URL")
+    CELERY_RESULT_BACKEND = os.getenv("REDIS_URL")
 
 CELERY_BEAT_SCHEDULE = {
-    "process_due_lectures_every_5_minutes": {
+    "process_due_lectures_every_hour": {
         "task": "courses.tasks.process_due_lectures_task",
         "schedule": 3600.0,
     },
 }
-
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
 
 # ------------------------------------------------
 # REST FRAMEWORK
@@ -215,15 +195,12 @@ REST_FRAMEWORK = {
     ]
 }
 
-
 # ------------------------------------------------
-# DEFAULT PRIMARY KEY FIELD TYPE
+# MISC
 # ------------------------------------------------
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 from django.contrib.messages import constants as messages
-
 MESSAGE_TAGS = {
     messages.INFO: "",
-    
 }
