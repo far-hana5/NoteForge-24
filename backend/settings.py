@@ -22,12 +22,10 @@ if ENVIRONMENT=='deployment':
     DEBUG=True
 else:
     DEBUG = False
+site_domain=os.getenv('RAILWAY_PUBLIC_DOMAIN',default='')
+ALLOWED_HOSTS = ["127.0.0.1",site_domain]
+CSRF_TRUSTED_ORIGINS=[ f'https://{site_domain}']
 
-ALLOWED_HOSTS = ["127.0.0.1", "*","web-production-1be98a.up.railway.app"]
-CSRF_TRUSTED_ORIGINS=['https://web-production-1be98a.up.railway.app']
-#ALLOWED_HOSTS = os.getenv(["*"])
-
-#ALLOWED_HOSTS = []
 
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
