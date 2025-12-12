@@ -4,6 +4,10 @@ Django settings for backend project.
 
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
+
+ENVIRONMENT=os.getenv('ENVIRONMENT',default='production')  
 
 # ------------------------------------------------
 # BASE SETTINGS
@@ -11,15 +15,16 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-from dotenv import load_dotenv
-import os
-load_dotenv()
+
 
 SECRET_KEY = os.getenv("SECRET_KEY")
-DEBUG = False
+if ENVIRONMENT=='deployment': 
+    DEBUG=True
+else:
+    DEBUG = False
 
-#ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
-ALLOWED_HOSTS = os.getenv("DJANGO_ALLOWED_HOSTS", "*").split(",")
+ALLOWED_HOSTS = ["127.0.0.1", "*"]
+#ALLOWED_HOSTS = os.getenv(["*"])
 
 #ALLOWED_HOSTS = []
 
@@ -58,6 +63,7 @@ INSTALLED_APPS = [
 # ------------------------------------------------
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -98,12 +104,31 @@ TEMPLATES = [
 # ------------------------------------------------
 # DATABASE
 # ------------------------------------------------
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
+DB_LIVE = os.getenv('DB_LIVE')
+if DB_LIVE in ["False",False]:
+      
+
+      
+      DATABASES = {
+          'default': {
+              'ENGINE': 'django.db.backends.sqlite3',
+              'NAME': BASE_DIR / 'db.sqlite3',
+          }
+      }
+
+else:
+
+      DATABASES={
+          'default':{
+              'ENGINE':'django.db.backends.postgresql',
+              'NAME':os.getenv('DB_NAME'),
+              'USER':os.getenv('DB_USER'),
+              'PASSWORD':os.getenv('DB_PASSWORD'),
+              'HOST': os.getenv('DB_HOST', 'localhost'),
+              #'HOST':os.getenv('DB_HOST'),
+              'PORT':os.getenv('DB_PORT'),
+          }
+      }
 
 
 # ------------------------------------------------
@@ -132,6 +157,13 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'backend' / 'static']  # ✅ points to backend/static
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STORAGES = {
+    # ...
+    "staticfiles": {
+        'BACKEND' : 'whitenoise.storage.CompressedStaticFilesStorage',
+
+    },
+}
 
 
 TIME_ZONE = "Asia/Dhaka"
@@ -140,8 +172,8 @@ USE_TZ = True
 #CELERY_BROKER_URL = "redis://localhost:6379/0"
 #CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
 # Celery settings
-CELERY_BROKER_URL = os.getenv("REDIS_URL")
-CELERY_RESULT_BACKEND = os.getenv("REDIS_URL")
+#CELERY_BROKER_URL = os.getenv("REDIS_URL")
+#CELERY_RESULT_BACKEND = os.getenv("REDIS_URL")
 
 CELERY_BEAT_SCHEDULE = {
     "process_due_lectures_every_5_minutes": {
