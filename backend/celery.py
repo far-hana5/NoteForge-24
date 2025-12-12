@@ -1,6 +1,8 @@
 import os
 from celery import Celery
 
+from celery import platforms
+platforms.C_FORCE_ROOT = True
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
 
 app = Celery('backend')
