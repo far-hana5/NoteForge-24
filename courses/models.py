@@ -18,7 +18,10 @@ class Course(models.Model):
     # e.g. ["Monday", "Wednesday"]
     class_time = models.TimeField(null=True, blank=True)
     # e.g. 14:40
+    class Meta:
+            unique_together = ('course_initial', 'course_name', 'section')
 
+    
     def get_url(self):
         return reverse('course_detail', args=[self.category.slug, self.slug, self.section])
 

@@ -22,10 +22,21 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
 
 
 
+from PIL import Image
+import io
 
-def extract_text_from_image(image_path):
+def extract_text_from_image(file):
+    """
+    file: BytesIO or path
+    """
     ocr_model = genai.GenerativeModel("gemini-2.5-flash")
-    img = Image.open(image_path)
+    
+    # If BytesIO
+    if isinstance(file, io.BytesIO):
+        img = Image.open(file)
+    else:  # path
+        img = Image.open(file)
+    
     prompt = "Extract handwritten text accurately from this image."
 
     try:
@@ -33,31 +44,32 @@ def extract_text_from_image(image_path):
         return response.text.strip() if response.text else "(No text found)"
     except:
         return "(Error extracting text)"
-    
 
 def structure_text_with_gemini(all_text):
     model = genai.GenerativeModel("gemini-2.5-flash")
-    prompt = ( "The following text was extracted using OCR and may contain mistakes, formatting errors, " "and broken structure. Your job is to CLEAN and RECONSTRUCT it, not rewrite it.\n\n" 
-    "📌 STRICT RULES:\n"
-    "- Convert everything into clean, structured Markdown.\n"
-    "- Use # for main headings.\n" 
-    "- Use ## for subheadings.\n" 
-    "- Use bullet points for lists.\n" 
-    "- Use fenced code blocksfor code.\n"
-    "- Fix indentation, spacing, and incorrect formatting.\n"
-    "- DO NOT summarize information you can explain topic .\n"
-    "- Preserve technical meaning.\n"
-    "- Do not use * or ** or *** in text \n"
-    "- If OCR text is wrong, correct it and explain simply in 1–2 lines.\n"
-    "- When you detect a topic change, create a section heading.\n"
-    "- Make sure output is clean, readable, and well-structured.\n\n"
-    "📌 INPUT OCR TEXT (very messy):\n"
-    f"{all_text}\n\n"
-    "📌 OUTPUT (clean Markdown only):"
-)
-
+    prompt = (
+        "The following text was extracted using OCR and may contain mistakes, formatting errors, "
+        "and broken structure. Your job is to CLEAN and RECONSTRUCT it, not rewrite it.\n\n"
+        "📌 STRICT RULES:\n"
+        "- Convert everything into clean, structured Markdown.\n"
+        "- Use # for main headings.\n"
+        "- Use ## for subheadings.\n"
+        "- Use bullet points for lists.\n"
+        "- Use fenced code blocks for code.\n"
+        "- Fix indentation, spacing, and incorrect formatting.\n"
+        "- DO NOT summarize information.\n"
+        "- Preserve technical meaning.\n"
+        "- Do not use * or ** or *** in text.\n"
+        "- If OCR text is wrong, correct it and explain simply in 1–2 lines.\n"
+        "- When you detect a topic change, create a section heading.\n"
+        "- Make sure output is clean, readable, and well-structured.\n\n"
+        "📌 INPUT OCR TEXT (very messy):\n"
+        f"{all_text}\n\n"
+        "📌 OUTPUT (clean Markdown only):"
+    )
     try:
         response = model.generate_content(prompt)
-        return response.text.strip() if response.text else all_text
+        return response.text.strip() if response.text else (all_text or "(No text found)")
     except:
-        return all_text
+        return all_text or "(No text found)"
+

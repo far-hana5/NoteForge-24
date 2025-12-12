@@ -5,7 +5,7 @@ from django.contrib import admin
 from .models import CourseCategory
 
 class CategoryAdmin(admin.ModelAdmin):
-    prepopulated_fields={'slug':('dep_name',)}
+    prepopulated_fields={'slug':('courseCategory',)}
     list_display=('courseCategory','dep_name')
 
 admin.site.register(CourseCategory,CategoryAdmin)

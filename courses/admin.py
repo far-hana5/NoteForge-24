@@ -4,6 +4,8 @@ from .models import Course, SectionNote, LectureFinalNote
 @admin.register(Course)
 class CourseAdmin(admin.ModelAdmin):
     list_display = ("course_initial", "course_name", "section", "class_time")
+    prepopulated_fields = {"slug": ("course_initial",)}
+
     search_fields = ("course_name", "course_initial")
 
 @admin.register(SectionNote)

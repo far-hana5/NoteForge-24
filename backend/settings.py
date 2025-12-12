@@ -35,6 +35,7 @@ CSRF_TRUSTED_ORIGINS = [
     f"https://{SITE_DOMAIN}",
     f"http://{SITE_DOMAIN}",
 ]
+WHITENOISE_USE_FINDERS = True
 
 # ------------------------------------------------
 # INSTALLED APPS
@@ -106,7 +107,10 @@ TEMPLATES = [
 # ------------------------------------------------
 # DATABASE
 # ------------------------------------------------
+
 DB_LIVE = os.getenv("DB_LIVE")
+  
+
 
 if DB_LIVE in ["False", False, None]:
     DATABASES = {
@@ -126,6 +130,8 @@ else:
             'PORT': os.getenv('DB_PORT'),
         }
     }
+
+
 
 # ------------------------------------------------
 # PASSWORD VALIDATION
