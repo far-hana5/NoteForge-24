@@ -153,25 +153,40 @@ USE_TZ = True
 
 
 # ------------------------------------------------
-# STATIC & MEDIA FILES
+# STATIC FILES (CSS, JS, etc.)
 # ------------------------------------------------
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [BASE_DIR / 'backend' / 'static']  # ✅ points to backend/static
-STATIC_ROOT = BASE_DIR / 'staticfiles'
-STORAGES = {
-    # ...
-    "staticfiles": {
-        'BACKEND' : 'whitenoise.storage.CompressedStaticFilesStorage',
+STATICFILES_DIRS = [BASE_DIR / 'backend' / 'static']  # Local static files during dev
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # Where collectstatic will put files
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-    },
-}
+# ------------------------------------------------
+# MEDIA FILES (User uploads, images, etc.)
+# ------------------------------------------------
+# Use Cloudinary for media storage
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
+# You can still keep MEDIA_URL for reference (optional)
+MEDIA_URL = '/media/'  
+
+# ------------------------------------------------
+# CLOUDINARY CONFIG
+# ------------------------------------------------
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
+
+cloudinary.config(
+    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+    api_key=os.getenv('CLOUDINARY_API_KEY'),
+    api_secret=os.getenv('CLOUDINARY_API_SECRET'),
+)
 
 
 TIME_ZONE = "Asia/Dhaka"
 USE_TZ = True
 
-#CELERY_BROKER_URL = "redis://localhost:6379/0"
-#CELERY_RESULT_BACKEND = "redis://localhost:6379/1"
+
 # Celery settings
 if DB_LIVE in ["False",False]:
      CELERY_BROKER_URL = "redis://localhost:6379/0"
