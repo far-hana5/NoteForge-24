@@ -38,7 +38,7 @@ The system enhances images using **OpenCV (CamScanner-like)**, extracts text usi
 ### 📚 Lecture View + Upload image
 ![Lecture View](ss/uploadimage.png)
 
-###  Download
+###  Downloadable images
 ![Download images](ss/download.png)
 
 ##  How the System Works
@@ -82,6 +82,8 @@ All dependencies are listed in the `requirements.txt` file.
 - **Celery 5.6** – Background task processing
 - **Redis** – Message broker
 - **OpenCV** – Image enhancement (CamScanner-like)
+   For better Image Resolution u can follow
+- **https://github.com/xinntao/ESRGAN?tab=readme-ov-file**(gpu)
 - **Google Gemini API** – OCR & AI text structuring
 - **ReportLab** – PDF generation
 - **Cloudinary** – Image storage
@@ -100,7 +102,8 @@ All dependencies are listed in the `requirements.txt` file.
 
 
 
-  python -m venv envWindows: env\Scripts\activate
+  python -m venv env
+  env\Scripts\activate
   pip install -r requirements.txt
 
 
