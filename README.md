@@ -82,8 +82,9 @@ All dependencies are listed in the `requirements.txt` file.
 - **Celery 5.6** – Background task processing
 - **Redis** – Message broker
 - **OpenCV** – Image enhancement (CamScanner-like)
-   For better Image Resolution u can follow
-- **https://github.com/xinntao/ESRGAN?tab=readme-ov-file**(gpu)
+  For users who require higher image resolution using GPU-based super-resolution,
+  you may explore the following repository:
+- **https://github.com/xinntao/ESRGAN?tab=readme-ov-file**
 - **Google Gemini API** – OCR & AI text structuring
 - **ReportLab** – PDF generation
 - **Cloudinary** – Image storage
